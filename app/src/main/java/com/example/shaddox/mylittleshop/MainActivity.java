@@ -6,12 +6,13 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ImageButton;
+import android.widget.Toast;
+
 import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,9 +30,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-                Log.d(LOG_TAG, "Starting intent ");
                 startActivity(intent);
-
             }
         });
     }
@@ -133,12 +132,12 @@ public class MainActivity extends AppCompatActivity {
 
         // Insert the new row, returning the primary key value of the new row
         Uri newUri = getContentResolver().insert(ItemEntry.CONTENT_URI, values);
-
-
+        Toast.makeText(getApplicationContext(), R.string.editor_insert_item_successful, Toast.LENGTH_LONG).show();
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu options from the res/menu/menu_catalog.xml file.
+        // Inflate the menu options from the res/menu/menu_main.xml file.
         // This adds menu items to the app bar.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
@@ -150,7 +149,8 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
-
+                insertItem();
+                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
