@@ -11,8 +11,6 @@ import android.util.Log;
 
 import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
 
-import static android.R.attr.id;
-
 /**
  * {@link ContentProvider} for Pets app.
  */
@@ -22,6 +20,7 @@ public class ItemProvider extends ContentProvider {
     private static final int ITEMS = 100;
     private static final int ITEM_ID = 101;
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+
     static {
         sUriMatcher.addURI(ItemContract.CONTENT_AUTHORITY, ItemContract.PATH_ITEMS, ITEMS);
         sUriMatcher.addURI(ItemContract.CONTENT_AUTHORITY, ItemContract.PATH_ITEMS + "/#", ITEM_ID);
@@ -115,6 +114,22 @@ public class ItemProvider extends ContentProvider {
     private Uri insertItem(Uri uri, ContentValues values) {
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
+        // Check that the name is not null
+        String name = values.getAsString(ItemEntry.COLUMN_ITEM_NAME);
+        if (name == null) {
+            throw new IllegalArgumentException("Item requires a name");
+        }
+
+        Integer quantity = values.getAsInteger(ItemEntry.COLUMN_ITEM_PRICE);
+        if (quantity != null && quantity < 0) {
+            throw new IllegalArgumentException("Item requires valid quantity");
+        }
+
+        Integer price = values.getAsInteger(ItemEntry.COLUMN_ITEM_PRICE);
+        if (price != null && price < 0) {
+            throw new IllegalArgumentException("Item requires valid price");
+        }
+
         // Insert the new pet with the given values
         long id = database.insert(ItemEntry.TABLE_NAME, null, values);
         // If the ID is -1, then the insertion failed. Log an error and return null.
@@ -130,7 +145,54 @@ public class ItemProvider extends ContentProvider {
      */
     @Override
     public int update(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
-        return 0;
+
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case ITEMS:
+                return updateItem(uri, contentValues, selection, selectionArgs);
+            case ITEM_ID:
+
+                selection = ItemEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                return updateItem(uri, contentValues, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not supported for " + uri);
+        }
+    }
+
+    private int updateItem(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+
+        // Check that the name is not null
+        if (values.containsKey(ItemEntry.COLUMN_ITEM_NAME)) {
+            String name = values.getAsString(ItemEntry.COLUMN_ITEM_NAME);
+            if (name == null) {
+                throw new IllegalArgumentException("Item requires a name");
+            }
+        }
+
+        if (values.containsKey(ItemEntry.COLUMN_ITEM_QUANTITY)) {
+            Integer quantity = values.getAsInteger(ItemEntry.COLUMN_ITEM_QUANTITY);
+            if (quantity != null && quantity < 0) {
+                throw new IllegalArgumentException("Item requires valid quantity");
+            }
+        }
+
+        if (values.containsKey(ItemEntry.COLUMN_ITEM_PRICE)) {
+            Integer price = values.getAsInteger(ItemEntry.COLUMN_ITEM_PRICE);
+            if (price != null && price < 0) {
+                throw new IllegalArgumentException("Item requires valid price");
+            }
+        }
+
+        if (values.size() == 0) {
+            return 0;
+        }
+
+        // Otherwise, get writeable database to update the data
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        // Returns the number of database rows affected by the update statement
+        return database.update(ItemEntry.TABLE_NAME, values, selection, selectionArgs);
     }
 
     /**
@@ -138,7 +200,22 @@ public class ItemProvider extends ContentProvider {
      */
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        return 0;
+        // Get writeable database
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case ITEMS:
+                // Delete all rows that match the selection and selection args
+                return database.delete(ItemEntry.TABLE_NAME, selection, selectionArgs);
+            case ITEM_ID:
+                // Delete a single row given by the ID in the URI
+                selection = ItemEntry._ID + "=?";
+                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                return database.delete(ItemEntry.TABLE_NAME, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Deletion is not supported for " + uri);
+        }
     }
 
     /**
@@ -146,6 +223,14 @@ public class ItemProvider extends ContentProvider {
      */
     @Override
     public String getType(Uri uri) {
-        return null;
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case ITEMS:
+                return ItemEntry.CONTENT_LIST_TYPE;
+            case ITEM_ID:
+                return ItemEntry.CONTENT_ITEM_TYPE;
+            default:
+                throw new IllegalStateException("Unknown URI " + uri + " with match " + match);
+        }
     }
 }
