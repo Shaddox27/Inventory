@@ -1,6 +1,11 @@
 package com.example.shaddox.mylittleshop;
 
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
+import android.content.Intent;
+import android.content.Loader;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -9,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
 
 /**
@@ -18,7 +24,16 @@ import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
 /**
  * Allows user to create a new item or edit an existing one.
  */
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    /**
+     * Identifier for the item data loader
+     */
+    private static final int EXISTING_ITEM_LOADER = 0;
+    /**
+     * Content URI for the existing item (null if it's a new item)
+     */
+    private Uri mCurrentItemUri;
 
     private EditText mNameEditText;
     private EditText mQuantityEditText;
@@ -28,7 +43,25 @@ public class DetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.detail_layout);
-        mNameEditText =(EditText) findViewById(R.id.edit_item_name);
+
+        // Examine the intent that was used to launch this activity,
+        // in order to figure out if we're creating a new pet or editing an existing one.
+        Intent intent = getIntent();
+        mCurrentItemUri = intent.getData();
+        // If the intent DOES NOT contain a pet content URI, then we know that we are
+        // creating a new pet.
+        if (mCurrentItemUri == null) {
+            // This is a new pet, so change the app bar to say "Add a Pet"
+            setTitle(getString(R.string.editor_activity_title_new_item));
+        } else {
+            // Otherwise this is an existing pet, so change app bar to say "Edit Pet"
+            setTitle(getString(R.string.editor_activity_title_edit_item));
+        }
+
+        // Initialize a loader to read the pet data from the database
+        // and display the current values in the editor
+        getLoaderManager().initLoader(EXISTING_ITEM_LOADER, null, this);
+        mNameEditText = (EditText) findViewById(R.id.edit_item_name);
         mQuantityEditText = (EditText) findViewById(R.id.edit_quantity);
         mPriceEditText = (EditText) findViewById(R.id.edit_price);
     }
@@ -98,4 +131,62 @@ public class DetailActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        if (mCurrentItemUri == null) {
+            return null;
+        }
+        // Since the editor shows all item attributes, define a projection that contains
+        // all columns from the item table
+        String[] projection = {
+                ItemEntry._ID,
+                ItemEntry.COLUMN_ITEM_NAME,
+                ItemEntry.COLUMN_ITEM_QUANTITY,
+                ItemEntry.COLUMN_ITEM_PRICE };
+
+        // This loader will execute the ContentProvider's query method on a background thread
+        return new CursorLoader(this,   // Parent activity context
+                mCurrentItemUri,         // Query the content URI for the current item
+                projection,             // Columns to include in the resulting Cursor
+                null,                   // No selection clause
+                null,                   // No selection arguments
+                null);                  // Default sort order
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        // Bail early if the cursor is null or there is less than 1 row in the cursor
+        if (cursor == null || cursor.getCount() < 1) {
+            return;
+        }
+
+        // Proceed with moving to the first row of the cursor and reading data from it
+        // (This should be the only row in the cursor)
+        if (cursor.moveToFirst()) {
+            // Find the columns of pet attributes that we're interested in
+            int nameColumnIndex = cursor.getColumnIndex(ItemEntry.COLUMN_ITEM_NAME);
+            int quantityColumnIndex = cursor.getColumnIndex(ItemEntry.COLUMN_ITEM_QUANTITY);
+            int priceColumnIndex = cursor.getColumnIndex(ItemEntry.COLUMN_ITEM_PRICE);
+
+            // Extract out the value from the Cursor for the given column index
+            String name = cursor.getString(nameColumnIndex);
+            int quantity = cursor.getInt(quantityColumnIndex);
+            int price = cursor.getInt(priceColumnIndex);
+
+            // Update the views on the screen with the values from the database
+            mNameEditText.setText(name);
+            mQuantityEditText.setText(Integer.toString(quantity));
+            mPriceEditText.setText(Integer.toString(price));
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // If the loader is invalidated, clear out all the data from the input fields.
+        mNameEditText.setText("");
+        mQuantityEditText.setText("");
+        mPriceEditText.setText("");
+    }
 }
+
