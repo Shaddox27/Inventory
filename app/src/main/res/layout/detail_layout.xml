@@ -103,19 +103,15 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:paddingTop="16dp">
 
         <Button
             android:id="@+id/button_order"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/button_order" />
-
-        <Button
-            android:id="@+id/button_delete"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/button_order"
-            android:text="@string/button_delete" />
+            android:layout_alignParentBottom="true"
+            android:text="@string/button_order"
+            android:onClick="orderFromSupplier"/>
     </RelativeLayout>
 </LinearLayout>

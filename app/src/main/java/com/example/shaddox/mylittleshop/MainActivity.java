@@ -1,9 +1,11 @@
 package com.example.shaddox.mylittleshop;
 
+import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
@@ -24,7 +26,7 @@ import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     /**
-     * Identifier for the pet data loader
+     * Identifier for the item data loader
      */
     private static final int ITEM_LOADER = 0;
 
@@ -52,15 +54,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        // Find the ListView which will be populated with the pet data
+        // Find the ListView which will be populated with the item data
         ListView itemListView = (ListView) findViewById(R.id.list);
 
         // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
         View emptyView = findViewById(R.id.empty_view);
         itemListView.setEmptyView(emptyView);
 
-        // Setup an Adapter to create a list item for each row of pet data in the Cursor.
-        // There is no pet data yet (until the loader finishes) so pass in null for the Cursor.
+        // Setup an Adapter to create a list item for each row of item data in the Cursor.
+        // There is no item data yet (until the loader finishes) so pass in null for the Cursor.
         mCursorAdapter = new ItemCursorAdapter(this, null);
         itemListView.setAdapter(mCursorAdapter);
 
@@ -75,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 // Set the URI on the data field of the intent
                 intent.setData(currentItemUri);
 
-                // Launch the {@link EditorActivity} to display the data for the current pet.
+                // Launch the {@link EditorActivity} to display the data for the current item.
                 startActivity(intent);
             }
         });
@@ -111,13 +113,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public boolean onOptionsItemSelected(MenuItem item) {
         // User clicked on a menu option in the app bar overflow menu
         switch (item.getItemId()) {
-            // Respond to a click on the "Insert dummy data" menu option
-            case R.id.action_insert_dummy_data:
-                insertItem();
-                return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
-                deleteAllItems();
+                showDeleteAllConfirmationDialog();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -129,7 +127,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         String[] projection = {
                 ItemEntry._ID,
                 ItemEntry.COLUMN_ITEM_NAME,
-                ItemEntry.COLUMN_ITEM_PRICE};
+                ItemEntry.COLUMN_ITEM_PRICE,
+                ItemEntry.COLUMN_ITEM_QUANTITY};
 
         // This loader will execute the ContentProvider's query method on a background thread
         return new CursorLoader(this,   // Parent activity context
@@ -142,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        // Update {@link PetCursorAdapter} with this new cursor containing updated pet data
+        // Update {@link ItemCursorAdapter} with this new cursor containing updated item data
         mCursorAdapter.swapCursor(data);
     }
 
@@ -153,7 +152,36 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     /**
-     * Helper method to delete all pets in the database.
+     * Prompt the user to confirm that they want to delete this item.
+     */
+    private void showDeleteAllConfirmationDialog() {
+        // Create an AlertDialog.Builder and set the message, and click listeners
+        // for the positive and negative buttons on the dialog.
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.delete_all_dialog_msg);
+        builder.setPositiveButton(R.string.action_delete, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked the "Delete" button, so delete all items.
+                deleteAllItems();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked the "Cancel" button, so dismiss the dialog
+                // and continue editing the item.
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
+
+        // Create and show the AlertDialog
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    /**
+     * Helper method to delete all items in the database.
      */
     private void deleteAllItems() {
         int rowsDeleted = getContentResolver().delete(ItemEntry.CONTENT_URI, null, null);

@@ -12,7 +12,7 @@ import android.util.Log;
 import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
 
 /**
- * {@link ContentProvider} for Pets app.
+ * {@link ContentProvider} for My Little Shop app.
  */
 
 public class ItemProvider extends ContentProvider {
@@ -134,7 +134,7 @@ public class ItemProvider extends ContentProvider {
             throw new IllegalArgumentException("Item requires valid price");
         }
 
-        // Insert the new pet with the given values
+        // Insert the new item with the given values
         long id = database.insert(ItemEntry.TABLE_NAME, null, values);
         // If the ID is -1, then the insertion failed. Log an error and return null.
         if (id == -1) {
@@ -142,7 +142,7 @@ public class ItemProvider extends ContentProvider {
             return null;
         }
 
-        // Notify all listeners that the data has changed for the pet content URI
+        // Notify all listeners that the data has changed for the item content URI
         getContext().getContentResolver().notifyChange(uri, null);
 
         return ContentUris.withAppendedId(uri, id);
