@@ -41,14 +41,14 @@
             android:textColor="#A2AAB0"/>
     </RelativeLayout>
 
-
     <ImageButton
         android:id="@+id/imageButton"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_gravity="right|bottom"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="end|bottom"
         android:layout_margin="15dp"
         android:background="@drawable/circle"
         android:src="@drawable/fab_plus_icon" />

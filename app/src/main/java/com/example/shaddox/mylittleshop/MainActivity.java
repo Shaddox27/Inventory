@@ -86,21 +86,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         getLoaderManager().initLoader(ITEM_LOADER, null, this);
     }
 
-
-    private void insertItem() {
-
-        // Create a new map of values, where column names are the keys
-        ContentValues values = new ContentValues();
-        values.put(ItemEntry.COLUMN_ITEM_NAME, "LaSportiva Miura");
-        values.put(ItemEntry.COLUMN_ITEM_QUANTITY, 1);
-        values.put(ItemEntry.COLUMN_ITEM_PRICE, 350);
-
-
-        // Insert the new row, returning the primary key value of the new row
-        Uri newUri = getContentResolver().insert(ItemEntry.CONTENT_URI, values);
-        Toast.makeText(getApplicationContext(), R.string.editor_insert_item_successful, Toast.LENGTH_LONG).show();
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu options from the res/menu/menu_main.xml file.

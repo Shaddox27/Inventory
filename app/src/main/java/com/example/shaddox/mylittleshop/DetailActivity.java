@@ -17,14 +17,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.shaddox.mylittleshop.data.ItemContract.ItemEntry;
-
-/**
- * Created by Shaddox on 2017. 06. 05..
- */
 
 /**
  * Allows user to create a new item or edit an existing one.
@@ -35,7 +32,6 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
      * Identifier for the item data loader
      */
     private static final int EXISTING_ITEM_LOADER = 0;
-    static final String ACTION_EMAIL = "com.example.action.EMAIL";
 
     /**
      * Content URI for the existing item (null if it's a new item)
@@ -54,6 +50,9 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
     private EditText mNameEditText;
     private EditText mQuantityEditText;
     private EditText mPriceEditText;
+    private int currentQuantity;
+    private Button button_plus;
+    private Button button_minus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,12 +81,36 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
         // and display the current values in the editor
         getLoaderManager().initLoader(EXISTING_ITEM_LOADER, null, this);
         mNameEditText = (EditText) findViewById(R.id.edit_item_name);
-        mQuantityEditText = (EditText) findViewById(R.id.edit_quantity);
+        mQuantityEditText = (EditText) findViewById(R.id.edit_text_quantity);
+        if (mCurrentItemUri == null) {
+            mQuantityEditText.setText("0");
+        }
         mPriceEditText = (EditText) findViewById(R.id.edit_price);
 
         mNameEditText.setOnTouchListener(mTouchListener);
         mQuantityEditText.setOnTouchListener(mTouchListener);
         mPriceEditText.setOnTouchListener(mTouchListener);
+
+        button_plus = (Button) findViewById(R.id.button_plus);
+        button_plus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                currentQuantity ++;
+                mQuantityEditText.setText(String.valueOf(currentQuantity));
+            }
+        });
+
+        button_minus = (Button) findViewById(R.id.button_minus);
+        button_minus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                currentQuantity --;
+                mQuantityEditText.setText(String.valueOf(currentQuantity));
+            }
+        });
+        button_minus.setOnTouchListener(mTouchListener);
+        button_plus.setOnTouchListener(mTouchListener);
+
     }
 
     /**
@@ -294,12 +317,12 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
 
             // Extract out the value from the Cursor for the given column index
             String name = cursor.getString(nameColumnIndex);
-            int quantity = cursor.getInt(quantityColumnIndex);
+            currentQuantity = cursor.getInt(quantityColumnIndex);
             int price = cursor.getInt(priceColumnIndex);
 
             // Update the views on the screen with the values from the database
             mNameEditText.setText(name);
-            mQuantityEditText.setText(Integer.toString(quantity));
+            mQuantityEditText.setText(Integer.toString(currentQuantity));
             mPriceEditText.setText(Integer.toString(price));
         }
     }
@@ -400,5 +423,6 @@ public class DetailActivity extends AppCompatActivity implements LoaderManager.L
             startActivity(emailIntent);
         }
     }
+
 }
 
